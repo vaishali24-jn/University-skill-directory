@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>University Skill Directory</title>
+
+<style>
+
+/* ===== PAGE ===== */
+body{
+margin:0;
+font-family:Arial, sans-serif;
+background:#f3f4f6;
+}
+
+/* ===== HEADER ===== */
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+background:#1e3a8a;
+color:white;
+}
+
+.search-box{
+padding:10px;
+border-radius:8px;
+border:none;
+width:220px;
+}
+
+.add-btn{
+padding:10px 18px;
+background:#7c3aed;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+/* ===== FILTER ===== */
+.filters{
+padding:20px 40px;
+background:white;
+}
+
+select{
+padding:8px;
+border-radius:6px;
+}
+
+/* ===== CARD GRID ===== */
+.container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:25px;
+padding:40px;
+}
+
+/* ===== CARD ===== */
+.card{
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 6px 18px rgba(0,0,0,0.1);
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-6px);
+}
+
+.skill{
+display:inline-block;
+background:#e0e7ff;
+color:#1e3a8a;
+padding:5px 10px;
+border-radius:6px;
+margin:5px 5px 5px 0;
+}
+
+/* ===== MODAL FORM ===== */
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+}
+
+.modal-content{
+background:white;
+padding:30px;
+width:350px;
+margin:120px auto;
+border-radius:12px;
+}
+
+.modal input, .modal select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+.save-btn{
+width:100%;
+padding:10px;
+background:#1e3a8a;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+<h2>🎓 University Skill Directory</h2>
+
+<div>
+<input id="search" class="search-box" placeholder="Search name or skill">
+<button class="add-btn" onclick="openModal()">+ Add Student</button>
+</div>
+</header>
+
+<!-- FILTER -->
+<div class="filters">
+<select id="branchFilter" onchange="filterStudents()">
+<option value="all">All Branches</option>
+<option value="CSE">CSE</option>
+<option value="ECE">ECE</option>
+<option value="Mechanical">Mechanical</option>
+<option value="Civil">Civil</option>
+</select>
+</div>
+
+<!-- CARD CONTAINER -->
+<div id="studentContainer" class="container"></div>
+
+<!-- ===== MODAL FORM ===== -->
+<div id="modal" class="modal">
+<div class="modal-content">
+<h3>Add Student</h3>
+
+<input id="name" placeholder="Student Name">
+<select id="branch">
+<option>CSE</option>
+<option>ECE</option>
+<option>Mechanical</option>
+<option>Civil</option>
+</select>
+
+<select id="year">
+<option>1st Year</option>
+<option>2nd Year</option>
+<option>3rd Year</option>
+<option>4th Year</option>
+</select>
+
+<input id="skills" placeholder="Skills (comma separated)">
+
+<button class="save-btn" onclick="addStudent()">Save</button>
+
+</div>
+</div>
+
+<script>
+
+let students = []
+
+function openModal(){
+document.getElementById("modal").style.display="block"
+}
+
+window.onclick=function(e){
+if(e.target.id==="modal"){
+document.getElementById("modal").style.display="none"
+}
+}
+
+/* ADD STUDENT */
+function addStudent(){
+
+let name=document.getElementById("name").value
+let branch=document.getElementById("branch").value
+let year=document.getElementById("year").value
+let skills=document.getElementById("skills").value.split(",")
+
+if(name==="") return alert("Enter name")
+
+students.push({name,branch,year,skills})
+displayStudents()
+
+document.getElementById("modal").style.display="none"
+document.getElementById("name").value=""
+document.getElementById("skills").value=""
+}
+
+/* DISPLAY */
+function displayStudents(){
+
+let container=document.getElementById("studentContainer")
+container.innerHTML=""
+
+let search=document.getElementById("search").value.toLowerCase()
+let branchFilter=document.getElementById("branchFilter").value
+
+students.forEach(s=>{
+
+let skillText=s.skills.join(" ").toLowerCase()
+
+if(
+(s.name.toLowerCase().includes(search) || skillText.includes(search)) &&
+(branchFilter==="all" || s.branch===branchFilter)
+){
+
+let card=document.createElement("div")
+card.className="card"
+
+let skillHTML=s.skills.map(sk=>`<span class="skill">${sk}</span>`).join("")
+
+card.innerHTML=`
+<h3>${s.name}</h3>
+<p><b>Branch:</b> ${s.branch}</p>
+<p><b>Year:</b> ${s.year}</p>
+${skillHTML}
+`
+
+container.appendChild(card)
+
+}
+
+})
+}
+
+/* SEARCH LIVE */
+document.getElementById("search").addEventListener("input",displayStudents)
+
+/* FILTER */
+function filterStudents(){
+displayStudents()
+}
+
+</script>
+
+</body>
+</html>
