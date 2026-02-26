@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>University Skill Directory</title>
+
+<style>
+
+/* ===== GLOBAL ===== */
+body{
+margin:0;
+font-family: 'Segoe UI', sans-serif;
+background:linear-gradient(135deg,#eef2ff,#f8fafc);
+}
+
+button{cursor:pointer}
+
+/* ===== HEADER ===== */
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+background:#1e3a8a;
+color:white;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.search-box{
+padding:10px;
+border-radius:8px;
+border:none;
+width:220px;
+}
+
+.add-btn{
+padding:10px 18px;
+background:#7c3aed;
+color:white;
+border:none;
+border-radius:8px;
+}
+
+/* ===== STATS ===== */
+.stats{
+display:flex;
+gap:30px;
+padding:20px 40px;
+font-weight:bold;
+}
+
+/* ===== FILTER & SORT ===== */
+.filters{
+display:flex;
+gap:20px;
+padding:20px 40px;
+background:white;
+}
+
+select{
+padding:8px;
+border-radius:6px;
+}
+
+/* ===== CARD GRID ===== */
+.container{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:25px;
+padding:40px;
+}
+
+/* ===== CARD ===== */
+.card{
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 6px 18px rgba(0,0,0,0.1);
+transition:0.3s;
+position:relative;
+animation:fadeIn 0.4s ease-in-out;
+}
+
+.card:hover{
+transform:translateY(-6px);
+}
+
+.avatar{
+width:60px;
+height:60px;
+border-radius:50%;
+background:#c7d2fe;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.skill{
+display:inline-block;
+background:#e0e7ff;
+color:#1e3a8a;
+padding:5px 10px;
+border-radius:20px;
+margin:5px 5px 5px 0;
+font-size:13px;
+}
+
+.actions{
+margin-top:10px;
+display:flex;
+gap:10px;
+}
+
+.edit-btn{
+background:#facc15;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+}
+
+.delete-btn{
+background:#ef4444;
+color:white;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+}
+
+/* ===== MODAL ===== */
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+}
+
+.modal-content{
+background:white;
+padding:30px;
+width:350px;
+margin:100px auto;
+border-radius:12px;
+position:relative;
+}
+
+.close{
+position:absolute;
+top:10px;
+right:15px;
+cursor:pointer;
+font-size:20px;
+}
+
+.modal input,.modal select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+.save-btn{
+width:100%;
+padding:10px;
+background:#1e3a8a;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🎓 Advanced University Skill Directory</h2>
+
+<div>
+<input id="search" class="search-box" placeholder="Search name or skill">
+<button class="add-btn" onclick="openModal()">+ Add Student</button>
+</div>
+</header>
+
+<!-- STATS -->
+<div class="stats">
+<div>Total Students: <span id="total">0</span></div>
+<div>CSE: <span id="cseCount">0</span></div>
+<div>ECE: <span id="eceCount">0</span></div>
+</div>
+
+<!-- FILTER -->
+<div class="filters">
+<select id="branchFilter" onchange="displayStudents()">
+<option value="all">All Branches</option>
+<option value="CSE">CSE</option>
+<option value="ECE">ECE</option>
+<option value="Mechanical">Mechanical</option>
+<option value="Civil">Civil</option>
+</select>
+
+<select id="sortOption" onchange="displayStudents()">
+<option value="az">Sort A-Z</option>
+<option value="year">Sort by Year</option>
+</select>
+</div>
+
+<div id="studentContainer" class="container"></div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">×</span>
+<h3>Add Student</h3>
+
+<input id="name" placeholder="Student Name">
+
+<select id="branch">
+<option>CSE</option>
+<option>ECE</option>
+<option>Mechanical</option>
+<option>Civil</option>
+</select>
+
+<select id="year">
+<option>1st Year</option>
+<option>2nd Year</option>
+<option>3rd Year</option>
+<option>4th Year</option>
+</select>
+
+<input id="skills" placeholder="Skills (comma separated)">
+
+<button class="save-btn" onclick="addStudent()">Save</button>
+</div>
+</div>
+
+<script>
+
+let students = JSON.parse(localStorage.getItem("students")) || []
+let editIndex = null
+
+function openModal(){
+document.getElementById("modal").style.display="block"
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none"
+editIndex=null
+}
+
+function addStudent(){
+
+let name=document.getElementById("name").value.trim()
+let branch=document.getElementById("branch").value
+let year=document.getElementById("year").value
+let skills=document.getElementById("skills").value.split(",").map(s=>s.trim())
+
+if(name==="") return alert("Enter name")
+
+let student={name,branch,year,skills}
+
+if(editIndex!==null){
+students[editIndex]=student
+}else{
+students.push(student)
+}
+
+localStorage.setItem("students",JSON.stringify(students))
+displayStudents()
+closeModal()
+
+document.getElementById("name").value=""
+document.getElementById("skills").value=""
+}
+
+function deleteStudent(index){
+students.splice(index,1)
+localStorage.setItem("students",JSON.stringify(students))
+displayStudents()
+}
+
+function editStudent(index){
+let s=students[index]
+document.getElementById("name").value=s.name
+document.getElementById("branch").value=s.branch
+document.getElementById("year").value=s.year
+document.getElementById("skills").value=s.skills.join(",")
+editIndex=index
+openModal()
+}
+
+function updateStats(){
+document.getElementById("total").innerText=students.length
+document.getElementById("cseCount").innerText=students.filter(s=>s.branch==="CSE").length
+document.getElementById("eceCount").innerText=students.filter(s=>s.branch==="ECE").length
+}
+
+function displayStudents(){
+
+let container=document.getElementById("studentContainer")
+container.innerHTML=""
+
+let search=document.getElementById("search").value.toLowerCase()
+let branchFilter=document.getElementById("branchFilter").value
+let sortOption=document.getElementById("sortOption").value
+
+let filtered=students.filter(s=>{
+let skillText=s.skills.join(" ").toLowerCase()
+return (
+(s.name.toLowerCase().includes(search) || skillText.includes(search)) &&
+(branchFilter==="all" || s.branch===branchFilter)
+)
+})
+
+if(sortOption==="az"){
+filtered.sort((a,b)=>a.name.localeCompare(b.name))
+}else{
+filtered.sort((a,b)=>a.year.localeCompare(b.year))
+}
+
+filtered.forEach((s,index)=>{
+
+let card=document.createElement("div")
+card.className="card"
+
+let skillHTML=s.skills.map(sk=>`<span class="skill">${sk}</span>`).join("")
+
+card.innerHTML=`
+<div class="avatar">${s.name.charAt(0).toUpperCase()}</div>
+<h3>${s.name}</h3>
+<p><b>Branch:</b> ${s.branch}</p>
+<p><b>Year:</b> ${s.year}</p>
+${skillHTML}
+<div class="actions">
+<button class="edit-btn" onclick="editStudent(${index})">Edit</button>
+<button class="delete-btn" onclick="deleteStudent(${index})">Delete</button>
+</div>
+`
+
+container.appendChild(card)
+})
+
+updateStats()
+}
+
+document.getElementById("search").addEventListener("input",displayStudents)
+
+displayStudents()
+
+</script>
+
+</body>
+</html>
